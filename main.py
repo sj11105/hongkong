@@ -5,12 +5,32 @@ from pydub import AudioSegment
 import io
 import soundfile as sf
 import numpy
+import os
 
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+AUDIO_DIR = BASE_DIR / "uploaded_audios"
+
+# Get all audio files (you can add filters like *.wav or *.mp3)
+audio_files = sorted(AUDIO_DIR.glob("*.*"))  # You can also use "*.wav" or "*.mp3"
+
+if not audio_files:
+    raise FileNotFoundError("No audio files found in the directory.")
+
+# Pick the first audio file
+first_audio_path = audio_files[3]
+print(f"First audio file found: {first_audio_path.name}")
+
+# Load the audio content into a variable
+with open(first_audio_path, "rb") as f:
+    audio_data = f.read()
+    
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
-model_id = "openai/whisper-tiny"
+model_id = "openai/whisper-base"
 
 model = AutoModelForSpeechSeq2Seq.from_pretrained(
     model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True
@@ -29,16 +49,10 @@ pipe = pipeline(
     return_timestamps=True
 )
 
-dataset = load_dataset("distil-whisper/librispeech_long", "clean", split="validation")
-sample = dataset[0]["audio"]  # This is a dict with "array" and "sampling_rate"
-
-# buffer = io.BytesIO()
-# sf.write(buffer, sample["array"], sample["sampling_rate"], format="WAV")
-# buffer.seek(0)
-
-# # Load into pydub
-# audio = AudioSegment.from_file(buffer, format="wav")
-# audio = audio[:30 * 1000]  # Slice first 30 seconds
+#dataset = load_dataset("distil-whisper/librispeech_long", "clean", split="validation")
+sample = audio_data
 
 result = pipe(sample)
-print(result["text"])
+
+
+print(result["text"]) 

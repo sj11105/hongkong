@@ -1,8 +1,8 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
-import shutil
 import os
-from datetime import datetime
+import uuid
+from app.llm import whisper
 
 router = APIRouter()
 
@@ -17,34 +17,30 @@ ALLOWED_AUDIO_TYPES = [
 
 @router.post("/upload-audio")
 async def upload_audio(file: UploadFile = File(...)):
+    print("received request for audio transcribe")
+
+    try:
+        print("Receiving files")
+        os.makedirs("newaudio", exist_ok=True)
+        audio_path = os.path.join("newaudio", f"{uuid.uuid64()}_{file.filename}")
+        print(f"saving audio to {audio_path}")
+
+        with open(audio_path , "wb") as f:
+            data = await file.read()
+            print(f"audio size is {len(data)} bytes")
+            f.write(data)
+
+        if not os.path.exists(audio_path):
+            raise Exception("File was not saved successfully.")
+        
+        chunks = whisper.split_audio(audio_path)
+
+        print("Starting transcription")
+        transcription = whisper.transcribe_chunks(chunks)
+
+        return JSONResponse(content={"transcription": transcription})
+
     
-    print("DEBUG: File content type ->", file.content_type)
-    print("DEBUG: File name ->", file.filename)
-    
-    
-    file_ext = os.path.splitext(file.filename)[1]
-    print("DEBUG: File extension ->", file_ext)
-
-    # Check for valid MIME type
-    if file.content_type not in ALLOWED_AUDIO_TYPES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid file type: {file.content_type}. Only audio files are allowed."
-        )
-
-    # Save with timestamped filename
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    filename = f"{timestamp}_{file.filename}"
-    file_path = os.path.join(AUDIO_UPLOAD_DIR, filename)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    return JSONResponse(
-        content={
-            "filename": filename,
-            "saved_path": file_path,
-            "mime_type": file.content_type,
-            "message": "File uploaded successfully"
-        }
-    )
+    except Exception as e:
+        print(f"Error during transcription: {str(e)}")
+        return JSONResponse(status_code=500, content={"error": str(e)})

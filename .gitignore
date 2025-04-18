@@ -3,3 +3,6 @@ __pycache__/
 uploaded_audios/
 .env
 tmp
+pdffile
+newaudio
+.vscode

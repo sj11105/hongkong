@@ -12,13 +12,17 @@ genai.configure(api_key=GEMINAI_API)
 model = genai.GenerativeModel(GEMINI_MODEL)
 
 def summarize_chunk(chunk: str) -> str:
-    prompt = (f"""You are an AI meeting assistant. This is a multilingual transcript (English + Chinese + others) analyse it properly.\n
-      Please after analyzing the transcript generate summary in a structured way which includes the brief overview of topic , key action points
-      and keep it clear and limit it upto one page only.
-      Transcript:
-      \"\"\"{chunk}\"\"\"
-      """)
-
+    prompt = (
+        f"""You are an intelligent AI meeting assistant. The following is a multilingual transcript (may contain English, Chinese, or other languages).\n\n
+        Your task is to analyze the transcript properly and generate a **one-page structured summary** that includes:\n
+        1. A **brief overview** of the discussion topics.\n
+        2. **Key action items** or decisions made.\n
+        3. A **short multilingual remark**, ONLY IF multilingual content played a significant role in communication.\n\n
+        - Do NOT elaborate excessively on language usage or transcription errors.\n
+        - If audio or transcript has issues, mention them briefly in **a single short sentence**.\n
+        - Keep the summary clear, organized, and concise — suitable for a single-page report.\n\n
+        Transcript:\n\"\"\"\n{chunk}\n\"\"\""""
+    )
 
     response = model.generate_content(prompt)
     return response.text
@@ -37,11 +41,15 @@ def summarize_large_transcript(transcript: str) -> str:
         summaries.append(summary.strip())
 
     # Combine all partial summaries into a final one
-    final_prompt =  (f"You are an AI assistant. These are summaries of different parts of a multilingual meeting.\n\n"
-    f"Please combine them into one single-page summary report with main discussion points and action items. "
-    f"Keep it clear and concise.\n\n"
-    f"Summaries:\n\n"
-    f"{chr(10).join(summaries)}")
+    final_prompt = (
+    "You are an AI assistant. Below are summaries from different chunks of a multilingual meeting transcript.\n\n"
+    "Your task is to merge these into a clean, **single-page summary** with the following sections:\n"
+    "1. **Discussion Overview**\n"
+    "2. **Key Action Points**\n"
+    "3. **Brief Multilingual Note** (if relevant — keep it under two lines).\n\n"
+    "Avoid repetition. Be brief and professional.\n\n"
+    f"Summaries:\n\n{chr(10).join(summaries)}"
+)
 
     final_response = model.generate_content(final_prompt)
     return final_response.text

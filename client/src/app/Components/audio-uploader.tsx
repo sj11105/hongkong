@@ -1,5 +1,5 @@
 "use client";
-
+import axios from "axios"
 import type React from "react";
 
 import { useState } from "react";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { FileAudio, Upload, X } from "lucide-react";
 import { motion } from "framer-motion";
+import { headers } from "next/headers";
 
 export default function AudioUploader() {
   const [isDragging, setIsDragging] = useState(false);
@@ -39,26 +40,42 @@ export default function AudioUploader() {
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!file) return;
 
     setIsUploading(true);
 
-    // Simulate upload progress
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 5;
-      setProgress(currentProgress);
+    const formData = new FormData()
+    formData.append("file", file);
 
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        // Redirect to results page or show results component
-        setTimeout(() => {
-          setIsUploading(false);
-          // Here you would typically redirect to results page
-        }, 500);
-      }
-    }, 200);
+    try {
+      const res = await axios.post("http://localhost:8000/upload-audio/",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          onUploadProgress : (progressEvent) => {
+            if (progressEvent.total) {
+              const percent = Math.round(progressEvent.loaded*100)/ progressEvent.total
+              setProgress(percent) ;
+            }
+          }
+        }
+      )
+
+      setProgress(100);
+
+      console.log(res.data)
+
+      setTimeout(() => {
+        setIsUploading(false);
+      }, 2000);
+    } catch (error) {
+      console.error(error);
+      setIsUploading(false)
+    }
+
   };
 
   const removeFile = () => {
@@ -71,11 +88,10 @@ export default function AudioUploader() {
     <div className="w-full">
       {!file ? (
         <div
-          className={`relative rounded-lg border-2 border-dashed p-6 transition-all ${
-            isDragging
+          className={`relative rounded-lg border-2 border-dashed p-6 transition-all ${isDragging
               ? "border-teal-500 bg-teal-50"
               : "border-slate-200 hover:border-teal-300"
-          }`}
+            }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}

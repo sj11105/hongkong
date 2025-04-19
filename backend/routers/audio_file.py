@@ -2,7 +2,8 @@ from fastapi import APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 import os
 import uuid
-from app.llm import whisper , genai
+from backend.llm import whisper , genai
+from backend.utils import pdf_convert
 
 
 router = APIRouter()
@@ -12,8 +13,12 @@ os.makedirs(AUDIO_UPLOAD_DIR, exist_ok=True) """
 
 
 ALLOWED_AUDIO_TYPES = [
-    "audio/mpeg", "audio/wav", "audio/x-wav", "audio/mp3",
-    "audio/x-m4a", "audio/webm", "application/octet-stream"
+    "audio/mpeg",    # .mp3
+    "audio/wav",     # .wav
+    "audio/x-wav",   # .wav 
+    "audio/mp3",     # .mp3 
+    "audio/x-m4a",   # .m4a
+    "audio/webm",    # .webm
 ]
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # This is where the this files reside
@@ -44,9 +49,14 @@ async def upload_audio(file: UploadFile = File(...)):
         transcription = whisper.transcribe_chunks(chunks)
 
         summary_text = genai.summarize_large_transcript(transcription)
-
-        return JSONResponse(content={"transcription": transcription  , "summary": summary_text})
-
+        
+        pdf_path = pdf_convert.save_summary_pdf_to_pdfhub(summary_text, os.path.basename(audio_path))
+        pdf_filename = os.path.basename(pdf_path) 
+        return JSONResponse(content={
+            "transcription": transcription,
+            "summary": summary_text,
+            "download_url": f"{pdf_filename}"
+        })
     
     except Exception as e:
         print(f"Error during transcription: {str(e)}")

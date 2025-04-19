@@ -14,6 +14,8 @@ export default function AudioUploader() {
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [pdfurl, setPdfUrl] = useState("")
+  const [isPdf, setIsPdf] = useState(false)
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -55,10 +57,10 @@ export default function AudioUploader() {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-          onUploadProgress : (progressEvent) => {
+          onUploadProgress: (progressEvent) => {
             if (progressEvent.total) {
-              const percent = Math.round(progressEvent.loaded*100)/ progressEvent.total
-              setProgress(percent) ;
+              const percent = Math.round(progressEvent.loaded * 100) / progressEvent.total
+              setProgress(percent);
             }
           }
         }
@@ -66,6 +68,16 @@ export default function AudioUploader() {
 
       setProgress(100);
 
+      if (res.data) {
+        const { transcription, summary, download_url } = res.data;
+        console.log("Transcription:", transcription);
+        console.log("Summary:", summary);
+        console.log("Download URL:", download_url);
+
+        setIsPdf(true);
+        setPdfUrl(download_url)
+
+      }
       console.log(res.data)
 
       setTimeout(() => {
@@ -84,13 +96,33 @@ export default function AudioUploader() {
     setIsUploading(false);
   };
 
+  const handlePdfDownload = async ()  => {
+    const res = await axios.get(`http://localhost:8000/download-summary?pdf_filename=${pdfurl}`, {
+      responseType: 'blob'
+    })
+    if (!res.data) {
+      alert("Failed to download PDF");
+      return;
+    }
+
+    const blob = await res.data
+    const url = window.URL.createObjectURL(blob)
+
+    const a = document.createElement('a')
+    a.href = url
+    a.download = pdfurl
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+  }
+
   return (
     <div className="w-full">
       {!file ? (
         <div
           className={`relative rounded-lg border-2 border-dashed p-6 transition-all ${isDragging
-              ? "border-teal-500 bg-teal-50"
-              : "border-slate-200 hover:border-teal-300"
+            ? "border-teal-500 bg-teal-50"
+            : "border-slate-200 hover:border-teal-300"
             }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -170,6 +202,13 @@ export default function AudioUploader() {
                 {progress}% uploaded
               </p>
             </div>
+          ) : isPdf ? (
+            <Button
+              className="mt-4 w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white"
+              onClick={handlePdfDownload}
+            >
+              Download PDF
+            </Button>
           ) : (
             <Button
               className="mt-4 w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white"

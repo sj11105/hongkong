@@ -1,6 +1,6 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
-from app.routers import auth , audio_file
+from backend.routers import auth , audio_file , download_pdf
 
 
 app = FastAPI()
@@ -19,4 +19,5 @@ def home():
 
 app.include_router(auth.router)
 app.include_router(audio_file.router)
+app.include_router(download_pdf.router)
 

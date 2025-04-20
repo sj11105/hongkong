@@ -183,21 +183,6 @@ export default function Home() {
             title="Easy Export"
             description="Download your transcriptions and summaries in multiple formats including TXT, PDF, and DOCX"
           />
-          <FeatureCard
-            icon={<Share2 className="h-10 w-10 text-emerald-500" />}
-            title="Instant Sharing"
-            description="Share your results directly via email, link, or to popular cloud storage services"
-          />
-          <FeatureCard
-            icon={<FileText className="h-10 w-10 text-teal-500" />}
-            title="Text Editing"
-            description="Edit your transcriptions directly in the browser before downloading or sharing"
-          />
-          <FeatureCard
-            icon={<Sparkles className="h-10 w-10 text-emerald-500" />}
-            title="Custom Formatting"
-            description="Customize the format and style of your transcriptions and summaries to suit your needs"
-          />
         </div>
       </section>
 

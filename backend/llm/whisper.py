@@ -11,7 +11,7 @@ import io
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
-model_id = "openai/whisper-large"
+model_id = "openai/whisper-small"
 model = AutoModelForSpeechSeq2Seq.from_pretrained(
     model_id,
     torch_dtype=torch_dtype,
@@ -47,9 +47,10 @@ def transcribe_chunks(chunks):
         chunk.export(buffer, format="wav")
         buffer.seek(0)
 
-        print(f"⏱ Processing chunk {i+1}/{len(chunks)}")
+        print(f"Processing chunk {i+1}/{len(chunks)}")
 
-        result = pipe(buffer) 
+        audio_bytes = buffer.read()
+        result = pipe(audio_bytes) 
         full_transcription += result["text"] + " "
     
     return full_transcription.strip()

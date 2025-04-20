@@ -1,5 +1,5 @@
 "use client";
-import axios from "axios"
+import axios from "axios";
 import type React from "react";
 
 import { useState } from "react";
@@ -14,8 +14,8 @@ export default function AudioUploader() {
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [pdfurl, setPdfUrl] = useState("")
-  const [isPdf, setIsPdf] = useState(false)
+  const [pdfurl, setPdfUrl] = useState("");
+  const [isPdf, setIsPdf] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -47,11 +47,12 @@ export default function AudioUploader() {
 
     setIsUploading(true);
 
-    const formData = new FormData()
+    const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const res = await axios.post("http://localhost:8000/upload-audio/",
+      const res = await axios.post(
+        "http://localhost:8000/upload-audio/",
         formData,
         {
           headers: {
@@ -59,12 +60,13 @@ export default function AudioUploader() {
           },
           onUploadProgress: (progressEvent) => {
             if (progressEvent.total) {
-              const percent = Math.round(progressEvent.loaded * 100) / progressEvent.total
+              const percent =
+                Math.round(progressEvent.loaded * 100) / progressEvent.total;
               setProgress(percent);
             }
-          }
+          },
         }
-      )
+      );
 
       setProgress(100);
 
@@ -75,19 +77,17 @@ export default function AudioUploader() {
         console.log("Download URL:", download_url);
 
         setIsPdf(true);
-        setPdfUrl(download_url)
-
+        setPdfUrl(download_url);
       }
-      console.log(res.data)
+      console.log(res.data);
 
       setTimeout(() => {
         setIsUploading(false);
       }, 2000);
     } catch (error) {
       console.error(error);
-      setIsUploading(false)
+      setIsUploading(false);
     }
-
   };
 
   const removeFile = () => {
@@ -96,34 +96,38 @@ export default function AudioUploader() {
     setIsUploading(false);
   };
 
-  const handlePdfDownload = async ()  => {
-    const res = await axios.get(`http://localhost:8000/download-summary?pdf_filename=${pdfurl}`, {
-      responseType: 'blob'
-    })
+  const handlePdfDownload = async () => {
+    const res = await axios.get(
+      `http://localhost:8000/download-summary?pdf_filename=${pdfurl}`,
+      {
+        responseType: "blob",
+      }
+    );
     if (!res.data) {
       alert("Failed to download PDF");
       return;
     }
 
-    const blob = await res.data
-    const url = window.URL.createObjectURL(blob)
+    const blob = await res.data;
+    const url = window.URL.createObjectURL(blob);
 
-    const a = document.createElement('a')
-    a.href = url
-    a.download = pdfurl
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-  }
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = pdfurl;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
 
   return (
     <div className="w-full">
       {!file ? (
         <div
-          className={`relative rounded-lg border-2 border-dashed p-6 transition-all ${isDragging
-            ? "border-teal-500 bg-teal-50"
-            : "border-slate-200 hover:border-teal-300"
-            }`}
+          className={`relative rounded-lg border-2 border-dashed p-6 transition-all ${
+            isDragging
+              ? "border-teal-500 bg-teal-50"
+              : "border-slate-200 hover:border-teal-300"
+          }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
